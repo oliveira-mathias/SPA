@@ -1,6 +1,4 @@
 """
-Introduction to Data-Flow Analysis.
-
 This file contains the implementation of a simple interpreter of low-level
 instructions. The interpreter takes a program, represented as its first
 instruction, plus an environment, which is a stack of bindings. Bindings are
@@ -15,8 +13,8 @@ Python 3. It will not work with standard Python 2.
 """
 
 from collections import deque
-from abc import ABC, abstractclassmethod
-from typing import Dict, Optional
+from abc import ABC, abstractmethod
+
 
 class Env:
     """
@@ -36,12 +34,13 @@ class Env:
         >>> e.get("a") + e.get("b")
         7
     """
-    def __init__(self, initial_args:Dict[str, int]={}):
-        self.env = deque()
-        for var, value in initial_args.items():
-            self.env.appendleft((var, value))
 
-    def get(self, var:str)->int:
+    def __init__(s, initial_args={}):
+        s.env = deque()
+        for var, value in initial_args.items():
+            s.env.appendleft((var, value))
+
+    def get(self, var):
         """
         Finds the first occurrence of variable 'var' in the environment stack,
         and returns the value associated with it.
@@ -52,19 +51,19 @@ class Env:
         else:
             raise LookupError(f"Absent key {val}")
 
-    def set(self, var:str, value:int):
+    def set(s, var, value):
         """
         This method adds 'var' to the environment, by placing the binding
         '(var, value)' onto the top of the environment stack.
         """
-        self.env.appendleft((var, value))
+        s.env.appendleft((var, value))
 
-    def dump(self):
+    def dump(s):
         """
         Prints the contents of the environment. This method is mostly used for
         debugging purposes.
         """
-        for (var, value) in self.env:
+        for var, value in s.env:
             print(f"{var}: {value}")
 
 
@@ -73,26 +72,35 @@ class Inst(ABC):
     The representation of instructions. All that an instruction has, that is
     common among all the instructions, is the next_inst attribute. This
     attribute determines the next instruction that will be fetched after this
-    instruction runs.
+    instruction runs. Also, every instruction has an index, which is always
+    different. The index is incremented whenever a new instruction is created.
     """
+
+    next_index = 0
+
     def __init__(self):
-        self.NEXTS = []
-        self.index = 0
+        self.nexts = []
+        self.preds = []
+        self.ID = Inst.next_index
+        Inst.next_index += 1
 
-    def add_next(self, next_inst:"Inst")->None:
-        self.NEXTS.append(next_inst)
+    def add_next(self, next_inst):
+        self.nexts.append(next_inst)
+        next_inst.preds.append(self)
 
-    @abstractclassmethod # type: ignore
+    @classmethod
+    @abstractmethod
     def definition(self):
         raise NotImplementedError
 
-    @abstractclassmethod # type: ignore
+    @classmethod
+    @abstractmethod
     def uses(self):
         raise NotImplementedError
 
-    def get_next(self)->Optional["Inst"]:
-        if len(self.NEXTS) > 0:
-            return self.NEXTS[0]
+    def get_next(self):
+        if len(self.nexts) > 0:
+            return self.nexts[0]
         else:
             return None
 
@@ -103,17 +111,30 @@ class BinOp(Inst):
     value, and use two values. As such, it contains a routine to extract the
     defined value, and the list of used values.
     """
-    def __init__(self, dst:str, src0:str, src1:str):
-        self.dst = dst
-        self.src0 = src0
-        self.src1 = src1
+
+    def __init__(s, dst, src0, src1):
+        s.dst = dst
+        s.src0 = src0
+        s.src1 = src1
         super().__init__()
 
-    def definition(self)->set[str]:
-        return set([self.dst])
+    @classmethod
+    @abstractmethod
+    def get_opcode(self):
+        raise NotImplementedError
 
-    def uses(self)->set[str]:
-        return set([self.src0, self.src1])
+    def definition(s):
+        return set([s.dst])
+
+    def uses(s):
+        return set([s.src0, s.src1])
+
+    def __str__(self):
+        op = self.get_opcode()
+        inst_s = f"{self.ID}: {self.dst} = {self.src0}{op}{self.src1}"
+        pred_s = f"\n  P: {', '.join([str(inst.ID) for inst in self.preds])}"
+        next_s = f"\n  N: {self.nexts[0].ID if len(self.nexts) > 0 else ''}"
+        return inst_s + pred_s + next_s
 
 
 class Add(BinOp):
@@ -129,8 +150,12 @@ class Add(BinOp):
         >>> a.get_next() == None
         True
     """
-    def eval(self, env: Env) -> None:
+
+    def eval(self, env):
         env.set(self.dst, env.get(self.src0) + env.get(self.src1))
+
+    def get_opcode(self):
+        return "+"
 
 
 class Mul(BinOp):
@@ -142,8 +167,12 @@ class Mul(BinOp):
         >>> e.get("a")
         6
     """
-    def eval(self, env: Env) -> None:
-        env.set(self.dst, env.get(self.src0) * env.get(self.src1))
+
+    def eval(s, env):
+        env.set(s.dst, env.get(s.src0) * env.get(s.src1))
+
+    def get_opcode(self):
+        return "*"
 
 
 class Lth(BinOp):
@@ -155,8 +184,12 @@ class Lth(BinOp):
         >>> e.get("a")
         True
     """
-    def eval(self, env: Env) -> None:
-        env.set(self.dst, env.get(self.src0) < env.get(self.src1))
+
+    def eval(s, env):
+        env.set(s.dst, env.get(s.src0) < env.get(s.src1))
+
+    def get_opcode(self):
+        return "<"
 
 
 class Geq(BinOp):
@@ -168,8 +201,12 @@ class Geq(BinOp):
         >>> e.get("a")
         False
     """
-    def eval(self, env: Env) -> None:
-        env.set(self.dst, env.get(self.src0) >= env.get(self.src1))
+
+    def eval(s, env):
+        env.set(s.dst, env.get(s.src0) >= env.get(s.src1))
+
+    def get_opcode(self):
+        return ">="
 
 
 class Bt(Inst):
@@ -187,36 +224,53 @@ class Bt(Inst):
         >>> b.get_next() == a
         True
     """
-    def __init__(self, cond:str, true_dst:Optional[Inst]=None, false_dst:Optional[Inst]=None):
-        super().__init__()
-        self.cond = cond
-        self.NEXTS = [true_dst, false_dst]
 
-    def definition(self) -> set:
+    def __init__(s, cond, true_dst=None, false_dst=None):
+        super().__init__()
+        s.cond = cond
+        s.nexts = [true_dst, false_dst]
+        if true_dst != None:
+            true_dst.preds.append(s)
+        if false_dst != None:
+            false_dst.preds.append(s)
+
+    def definition(s):
         return set()
 
-    def uses(self)->set[str]:
-        return set([self.cond])
+    def uses(s):
+        return set([s.cond])
 
-    def add_next(self, false_dst:Optional[Inst]) -> None:
-        self.NEXTS[1] = false_dst
+    def add_true_next(s, true_dst):
+        s.nexts[0] = true_dst
+        true_dst.preds.append(s)
 
-    def eval(self, env:Env):
+    def add_next(s, false_dst):
+        s.nexts[1] = false_dst
+        false_dst.preds.append(s)
+
+    def eval(s, env):
         """
         The evaluation of the condition sets the next_iter to the instruction.
         This value determines which successor instruction is to be evaluated.
         Any values greater than 0 are evaluated as True, while 0 corresponds to
         False.
         """
-        if env.get(self.cond):
-            self.next_iter = 0
+        if env.get(s.cond):
+            s.next_iter = 0
         else:
-            self.next_iter = 1
+            s.next_iter = 1
 
-    def get_next(self):
-        return self.NEXTS[self.next_iter]
+    def get_next(s):
+        return s.nexts[s.next_iter]
 
-def interp(instruction, environment:Env):
+    def __str__(self):
+        inst_s = f"{self.ID}: bt {self.cond}"
+        pred_s = f"\n  P: {', '.join([str(inst.ID) for inst in self.preds])}"
+        next_s = f"\n  NT:{self.nexts[0].ID} NF:{self.nexts[1].ID}"
+        return inst_s + pred_s + next_s
+
+
+def interp(instruction, environment):
     """
     This function evaluates a program until there is no more instructions to
     evaluate.

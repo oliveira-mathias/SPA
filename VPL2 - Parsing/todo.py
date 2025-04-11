@@ -64,32 +64,39 @@ def file2cfg_and_env(lines:list[str]):
     """
     # TODO: Imlement this method.
     env = line2env(lines[0])
-    insts:list[Optional[Inst]] = []
+    insts = []
 
     # Parsing das linhas
     # Primeira passada cria as instruções
     for i in range(1, len(lines)):
         tokens = lines[i].split()
         # Verificamos se estamos em um branch ou em uma instrução
-        if(tokens[1] == '='):
-            if(tokens[2] == 'add'):
+        if(tokens[1] == "="):
+            if(tokens[2] == "add"):
                 insts.append(Add(tokens[0], tokens[3], tokens[4]))
-            elif (tokens[2] == 'mul'):
+            elif (tokens[2] == "mul"):
                 insts.append(Mul(tokens[0], tokens[3], tokens[4]))
-            elif (tokens[2] == 'lth'):
+            elif (tokens[2] == "lth"):
                 insts.append(Lth(tokens[0], tokens[3], tokens[4]))
-            elif (tokens[2] == 'geq'):
-                insts.append(Lth(tokens[0], tokens[3], tokens[4]))
+            elif (tokens[2] == "geq"):
+                insts.append(Geq(tokens[0], tokens[3], tokens[4]))
         else:
             insts.append(Bt(tokens[1], None, None))
-
+        
+    # Adicionando a sentinela
+    insts.append(None)
 
     # Costurando a lista de instruções
-    for i in range(1, len(lines)):
-        tokens = lines[i].split()
-        if(tokens[1] == '='):
-            insts[i-1].add_next(insts[i])
-        else:
-            insts[i-1].add_next()
-            insts[i-1].add_next_true()
+    for i in range(len(insts)-1):
+        tokens = lines[i+1].split()
+        if(insts[i+1] is not None):
+                insts[i].add_next(insts[i+1])
+        
+        # Verificamos se a instrução é um branch
+        if(tokens[1] != "="):
+            insts[i].add_true_next(insts[int(tokens[2])])
+        
+    # Removendo a sentinela
+    insts.pop()
+
     return (env, insts)
