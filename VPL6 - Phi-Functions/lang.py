@@ -269,6 +269,9 @@ class PhiBlock(Inst):
             ['a0', 'a1']
         """
         self.phis = phis
+        self.selectors = {}
+        for i in range(len(selector_IDs)):
+            self.selectors[selector_IDs[i]] = i
         # TODO: implement the rest of this method
         # here...
         #########################################
@@ -304,9 +307,21 @@ class PhiBlock(Inst):
         return sum([phi.uses() for phi in self.phis], [])
 
     def eval(self, env, PC):
+        pathIndex = self.selectors[PC]
+
+        values = []
         # TODO: Read all the definitions
+        # We read all the values withou updating the enviroment
+        for phi in self.phis:
+            var = phi.uses()[pathIndex]
+            values.append(env.get(var))
+
         # TODO: Assign all the uses:
-        pass
+        # We update the value of the phi functions
+        for i in range(len(values)):
+            var = self.phis[i].definition()
+            env.set(var, values[i])
+
 
     def __str__(self):
         block_str = "\n".join([str(phi) for phi in self.phis])
