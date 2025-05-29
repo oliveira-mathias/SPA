@@ -30,7 +30,18 @@ class Edge():
             "True: ['ref_0', 'ref_1']"
         """
         # TODO: Implement this method.
-        return False
+        # We make sure the keys exist
+        if(self.dst not in env.keys()):
+            env[self.dst] = set()
+        if(self.src not in env.keys()):
+            env[self.src] = set()
+
+        # Instantiating the sets
+        prior = env[self.dst]
+        next = env[self.dst].union(env[self.src])
+
+        env[self.dst] = next
+        return (prior!=next)
 
     def __str__(self):
         """
@@ -57,7 +68,35 @@ def init_env(insts):
         ['ref_0', 'ref_1']
     """
     # TODO: Implement this method.
-    return None
+    # Obtendo a lista de nomes de ponteiros
+    ptr_names = set()
+    for inst in insts:
+        if (isinstance(inst, Alloca)):
+            ptr_names.add(inst.name)
+        elif (isinstance(inst, Move)):
+            ptr_names.add(inst.src)
+            ptr_names.add(inst.dst)
+        elif (isinstance(inst, Store)):
+            ptr_names.add(inst.ref)
+            ptr_names.add(inst.src)
+        elif (isinstance(inst, Load)):
+            ptr_names.add(inst.dst)
+            ptr_names.add(inst.ref)
+
+    env = {}
+    # Para cada ponteiro inicializamos um conjunto
+    for name in ptr_names:
+        env[name] = set()
+
+    # Populando os conjuntos e criando os conjuntos referentes as posições de memória
+    for inst in insts:
+        if(isinstance(inst, Alloca)):
+            var_name = inst.name
+            mem_pos_name = "ref_{}".format(inst.ID)
+            env[var_name].add(mem_pos_name)
+            env[mem_pos_name] = set()
+
+    return env
 
 
 def propagate_alias_info(edges, env):
@@ -81,7 +120,10 @@ def propagate_alias_info(edges, env):
         "(False, {'v0'}, {'v0'})"
     """
     # TODO: Implement this method.
-    return None
+    changed = False
+    for edge in edges:
+        changed |= edge.eval(env)
+    return changed
 
 
 def evaluate_st_constraints(insts, env):
@@ -102,7 +144,14 @@ def evaluate_st_constraints(insts, env):
         ['Alias(r) >= Alias(a)', 'Alias(s) >= Alias(x)']
     """
     # TODO: Implement this method.
-    return None
+    constraints = set()
+    for inst in insts:
+        if (isinstance(inst, Store)):
+            for t in env[inst.ref]:
+                # Não podemos ter arestas de um nó para ele mesmo
+                if(t != inst.src):
+                    constraints.add(Edge(t, inst.src))
+    return constraints
 
 
 def evaluate_ld_constraints(insts, env):
@@ -123,7 +172,14 @@ def evaluate_ld_constraints(insts, env):
         ['Alias(b) >= Alias(r)', 'Alias(y) >= Alias(s)']
     """
     # TODO: Implement this method.
-    return None
+    constraints = set()
+    for inst in insts:
+        if(isinstance(inst, Load)):
+            for t in env[inst.ref]:
+                # Não podemos ter arestas de um nó para ele mesmo
+                if(t != inst.dst):
+                    constraints.add(Edge(inst.dst, t))
+    return constraints
 
 
 def abstract_interp(insts):
@@ -153,19 +209,29 @@ def abstract_interp(insts):
     #
     # 1. Initialize the environment:
     #
+    env = init_env(insts)
 
     # 2. Build the initial graph of points-to relations:
-    #
+    # Edges Set will be used to prevent repeated edges in the graph
+    G = set()
+
+    for inst in insts:
+        if(isinstance(inst, Move)):
+            G.add(Edge(inst.dst, inst.src))
 
     # 3. Run iterations until we stabilize:
     #
-    changed = False
+    changed = True
     while changed:
         # 3.a: Evaluate all the complex constraints:
         #
+        st_constraints = evaluate_st_constraints(insts, env)
+        ld_constraints = evaluate_ld_constraints(insts, env)
+        G = G.union(st_constraints)
+        G = G.union(ld_constraints)
 
         # 3.b: Propagate the points-to information:
         #
-        pass
+        changed = propagate_alias_info(G, env)
 
-    return None
+    return env

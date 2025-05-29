@@ -294,6 +294,8 @@ class Alloca(Inst):
 
     def __init__(self, name):
         super().__init__()
+        # Esse name na verdade é o nome da variável que vai receber a posição de memória
+        # Ou seja, a instrução era "name = alloca"
         self.name = name
 
     def definition(self):
