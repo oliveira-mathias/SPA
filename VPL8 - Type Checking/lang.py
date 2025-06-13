@@ -294,6 +294,13 @@ class Phi(Inst):
             elif currT is not None and varT is not None:
                 if(currT != varT):
                     raise InstTypeErr(self, currT, varT)
+
+        # Verificamos se de fato alguma variável tinha algum tipo definido
+        if currT is None:
+            raise InstTypeErr(self, "Any Type", None)
+        
+        # Atribuimos o tipo da variável destino
+        type_env.set(self.dst, currT)
         # raise NotImplementedError
 
     def __str__(self):
@@ -580,15 +587,8 @@ class Add(BinOp):
             LangType.NUM
         """
         # TODO: implement this method
-        try:
-            Type0 = type_env.get(self.src0)
-        except LookupError:
-            return 
-        
-        try:
-            Type1 = type_env.get(self.src1)
-        except LookupError:
-            return
+        Type0 = type_env.get(self.src0)
+        Type1 = type_env.get(self.src1)
 
         if Type0 != LangType.NUM or Type1 != LangType.NUM:
             raise InstTypeErr(self, LangType.NUM, LangType.BOOL)
@@ -632,15 +632,8 @@ class Mul(BinOp):
             LangType.NUM
         """
         # TODO: implement this method
-        try:
-            Type0 = type_env.get(self.src0)
-        except LookupError:
-            return 
-        
-        try:
-            Type1 = type_env.get(self.src1)
-        except LookupError:
-            return
+        Type0 = type_env.get(self.src0)
+        Type1 = type_env.get(self.src1)
 
         if Type0 != LangType.NUM or Type1 != LangType.NUM:
             raise InstTypeErr(self, LangType.NUM, LangType.BOOL)
@@ -684,15 +677,8 @@ class Lth(BinOp):
             LangType.BOOL
         """
         # TODO: implement this method
-        try:
-            Type0 = type_env.get(self.src0)
-        except LookupError:
-            return 
-        
-        try:
-            Type1 = type_env.get(self.src1)
-        except LookupError:
-            return
+        Type0 = type_env.get(self.src0)
+        Type1 = type_env.get(self.src1)
 
         if Type0 != LangType.NUM or Type1 != LangType.NUM:
             raise InstTypeErr(self, LangType.NUM, LangType.BOOL)
@@ -736,15 +722,8 @@ class Geq(BinOp):
             LangType.BOOL
         """
         # TODO: implement this method
-        try:
-            Type0 = type_env.get(self.src0)
-        except LookupError:
-            return 
-        
-        try:
-            Type1 = type_env.get(self.src1)
-        except LookupError:
-            return
+        Type0 = type_env.get(self.src0)
+        Type1 = type_env.get(self.src1)
 
         if Type0 != LangType.NUM or Type1 != LangType.NUM:
             raise InstTypeErr(self, LangType.NUM, LangType.BOOL)
@@ -823,10 +802,7 @@ class Bt(Inst):
             Expected: LangType.BOOL, found: LangType.NUM
         """
         # TODO: implement this method
-        try:
-            TypeP = type_env.get(self.cond)
-        except LookupError:
-            return 
+        TypeP = type_env.get(self.cond)
 
         if TypeP != LangType.BOOL:
             raise InstTypeErr(self, LangType.BOOL, LangType.NUM)
