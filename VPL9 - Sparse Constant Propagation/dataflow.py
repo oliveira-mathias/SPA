@@ -100,9 +100,11 @@ class DataFlowEq(ABC):
         """
         # TODO: Implement this method:
         # old_abs_val = ...
-        old_abs_val = 'UNDEF'
+        # old_abs_val = 'UNDEF'
+        old_abs_val =  data_flow_env[self.name()] if self.name() in data_flow_env.keys() else "UNDEF"
         # new_abs_val = ... self.eval_aux(data_flow_env) ...
-        new_abs_val = 'UNDEF'
+        # new_abs_val = 'UNDEF'
+        new_abs_val = self.eval_aux(data_flow_env)
         # 
         if new_abs_val != old_abs_val:
             data_flow_env[self.name()] = new_abs_val
@@ -131,7 +133,7 @@ class ConstantPropagationEq(DataFlowEq):
 
 
 class AddEq(ConstantPropagationEq):
-    def eval_aux(self, abs_env: Env):
+    def eval_aux(self, abs_env):
         """
         Example:
             >>> i0 = Add('x', 'ZERO', 'ONE')
@@ -145,12 +147,19 @@ class AddEq(ConstantPropagationEq):
             [('ONE', 1), ('ZERO', 0), ('x', 1), ('z', 2)]
         """
         # TODO: Implement this method.
-        if abs_env[self.inst.src0] == "NAC" or abs_env[self.inst.src1] == "NAC":
-            abs_env[self.inst.dst] = "NAC"
+        new_abs_val = "UNDEF"
+        var_0_abs = abs_env[self.inst.src0] if self.inst.src0 in abs_env.keys() else "UNDEF"
+        var_1_abs = abs_env[self.inst.src1] if self.inst.src1 in abs_env.keys() else "UNDEF"
+        if var_0_abs == "NAC" or var_1_abs == "NAC":
+            new_abs_val = "NAC"
+        elif var_0_abs == "UNDEF":
+            new_abs_val = "UNDEF"
+        elif var_1_abs == "UNDEF":
+            new_abs_val = "UNDEF"
         else:
-            abs_env[self.inst.dst] = abs_env[self.inst.src0] + abs_env[self.inst.src1]
-
-        abs_env[self.inst.dst] = 5
+            new_abs_val = var_0_abs + var_1_abs
+        
+        return new_abs_val
         # raise NotImplementedError
 
 
@@ -169,7 +178,27 @@ class MulEq(ConstantPropagationEq):
             [('ONE', 1), ('x', 1), ('z', 1)]
         """
         # TODO: Implement this method.
-        raise NotImplementedError
+        # new_abs_val = "UNDEF"
+        # if abs_env[self.inst.src0] == "NAC" or abs_env[self.inst.src1] == "NAC":
+        #     new_abs_val = "NAC"
+        # else:
+        #     new_abs_val = abs_env[self.inst.src0] * abs_env[self.inst.src1]
+        
+        # return new_abs_val
+        new_abs_val = "UNDEF"
+        var_0_abs = abs_env[self.inst.src0] if self.inst.src0 in abs_env.keys() else "UNDEF"
+        var_1_abs = abs_env[self.inst.src1] if self.inst.src1 in abs_env.keys() else "UNDEF"
+        if var_0_abs == "NAC" or var_1_abs == "NAC":
+            new_abs_val = "NAC"
+        elif var_0_abs == "UNDEF":
+            new_abs_val = "UNDEF"
+        elif var_1_abs == "UNDEF":
+            new_abs_val = "UNDEF"
+        else:
+            new_abs_val = var_0_abs * var_1_abs
+        
+        return new_abs_val
+        # raise NotImplementedError
 
 
 class LthEq(ConstantPropagationEq):
@@ -184,7 +213,27 @@ class LthEq(ConstantPropagationEq):
             [('ONE', 1), ('x', False)]
         """
         # TODO: Implement this method.
-        raise NotImplementedError
+        # new_abs_val = "UNDEF"
+        # if abs_env[self.inst.src0] == "NAC" or abs_env[self.inst.src1] == "NAC":
+        #     new_abs_val = "NAC"
+        # else:
+        #     new_abs_val = abs_env[self.inst.src0] < abs_env[self.inst.src1]
+        
+        # return new_abs_val
+        new_abs_val = "UNDEF"
+        var_0_abs = abs_env[self.inst.src0] if self.inst.src0 in abs_env.keys() else "UNDEF"
+        var_1_abs = abs_env[self.inst.src1] if self.inst.src1 in abs_env.keys() else "UNDEF"
+        if var_0_abs == "NAC" or var_1_abs == "NAC":
+            new_abs_val = "NAC"
+        elif var_0_abs == "UNDEF":
+            new_abs_val = "UNDEF"
+        elif var_1_abs == "UNDEF":
+            new_abs_val = "UNDEF"
+        else:
+            new_abs_val = var_0_abs < var_1_abs
+        
+        return new_abs_val
+        # raise NotImplementedError
 
 
 class GeqEq(ConstantPropagationEq):
@@ -199,7 +248,27 @@ class GeqEq(ConstantPropagationEq):
             [('ONE', 1), ('x', True)]
         """
         # TODO: Implement this method.
-        raise NotImplementedError
+        # new_abs_val = "UNDEF"
+        # if abs_env[self.inst.src0] == "NAC" or abs_env[self.inst.src1] == "NAC":
+        #     new_abs_val = "NAC"
+        # else:
+        #     new_abs_val = abs_env[self.inst.src0] >= abs_env[self.inst.src1]
+        
+        # return new_abs_val
+        new_abs_val = "UNDEF"
+        var_0_abs = abs_env[self.inst.src0] if self.inst.src0 in abs_env.keys() else "UNDEF"
+        var_1_abs = abs_env[self.inst.src1] if self.inst.src1 in abs_env.keys() else "UNDEF"
+        if var_0_abs == "NAC" or var_1_abs == "NAC":
+            new_abs_val = "NAC"
+        elif var_0_abs == "UNDEF":
+            new_abs_val = "UNDEF"
+        elif var_1_abs == "UNDEF":
+            new_abs_val = "UNDEF"
+        else:
+            new_abs_val = var_0_abs >= var_1_abs
+        
+        return new_abs_val
+        # raise NotImplementedError
 
 
 class ReadEq(ConstantPropagationEq):
@@ -216,7 +285,8 @@ class ReadEq(ConstantPropagationEq):
             'NAC'
         """
         # print(self.inst.dst)
-        data_flow_env[self.inst.dst] = "NAC"
+        # data_flow_env[self.inst.dst] = "NAC"
+        return "NAC"
         # data_flow_env.set(self.inst.dst, "NAC")
         # return 'NAC'
 
@@ -261,7 +331,13 @@ class PhiEq(ConstantPropagationEq):
             [('const1', 1), ('const2', 2), ('x', 'NAC')]
         """
         # TODO: Implement this method.
-        raise NotImplementedError
+        new_abs_type = "UNDEF"
+        for i in range(len(self.inst.uses())):
+            var_value = env[self.inst.uses()[i]] if self.inst.uses()[i] in env.keys() else "UNDEF"
+            new_abs_type = meet(new_abs_type, var_value)
+
+        return new_abs_type
+        # raise NotImplementedError
 
 
 def constant_prop_constraint_gen(instructions):
