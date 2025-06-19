@@ -53,7 +53,7 @@ def file2cfg_and_env(lines):
         # Separamos as operações do branch
         if tokens[1] == "=":
             if tokens[2] == "rd":
-                insts.append(Read(tokens[2]))
+                insts.append(Read(tokens[0]))
             elif tokens[2] == "add":
                 insts.append(Add(tokens[0], tokens[3], tokens[4]))
             elif tokens[2] == "mul":

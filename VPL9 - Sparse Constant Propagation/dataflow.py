@@ -101,7 +101,12 @@ class DataFlowEq(ABC):
         # TODO: Implement this method:
         # old_abs_val = ...
         # old_abs_val = 'UNDEF'
-        old_abs_val =  data_flow_env[self.name()] if self.name() in data_flow_env.keys() else "UNDEF"
+        old_abs_val = None
+        if self.name() in data_flow_env.keys():
+            old_abs_val =  data_flow_env[self.name()]
+        else:
+            data_flow_env[self.name()] = "UNDEF"
+            old_abs_val = "UNDEF"
         # new_abs_val = ... self.eval_aux(data_flow_env) ...
         # new_abs_val = 'UNDEF'
         new_abs_val = self.eval_aux(data_flow_env)
@@ -147,9 +152,24 @@ class AddEq(ConstantPropagationEq):
             [('ONE', 1), ('ZERO', 0), ('x', 1), ('z', 2)]
         """
         # TODO: Implement this method.
+        # O valor antigo da variável
+        old_abs_val = abs_env[self.inst.dst]
+
+        # O valor abstrato dos operandos
+        if self.inst.src0 in abs_env.keys():
+            var_0_abs = abs_env[self.inst.src0]  
+        else:
+            abs_env[self.inst.src0] = "UNDEF"
+            var_0_abs = "UNDEF"
+
+        if self.inst.src1 in abs_env.keys():
+            var_1_abs = abs_env[self.inst.src1]  
+        else:
+            abs_env[self.inst.src1] = "UNDEF"
+            var_1_abs = "UNDEF"
+
+        # Computando o novo valor abstrato da variável destino
         new_abs_val = "UNDEF"
-        var_0_abs = abs_env[self.inst.src0] if self.inst.src0 in abs_env.keys() else "UNDEF"
-        var_1_abs = abs_env[self.inst.src1] if self.inst.src1 in abs_env.keys() else "UNDEF"
         if var_0_abs == "NAC" or var_1_abs == "NAC":
             new_abs_val = "NAC"
         elif var_0_abs == "UNDEF":
@@ -157,9 +177,11 @@ class AddEq(ConstantPropagationEq):
         elif var_1_abs == "UNDEF":
             new_abs_val = "UNDEF"
         else:
+            # Nesse caso, os dois valores são inicializados para constantes
             new_abs_val = var_0_abs + var_1_abs
-        
-        return new_abs_val
+
+        # TOmamos o meet dos valores para evitar loops        
+        return meet(old_abs_val, new_abs_val)
         # raise NotImplementedError
 
 
@@ -185,9 +207,23 @@ class MulEq(ConstantPropagationEq):
         #     new_abs_val = abs_env[self.inst.src0] * abs_env[self.inst.src1]
         
         # return new_abs_val
+        old_abs_val = abs_env[self.inst.dst]
+
+        # O valor abstrato dos operandos
+        if self.inst.src0 in abs_env.keys():
+            var_0_abs = abs_env[self.inst.src0]  
+        else:
+            abs_env[self.inst.src0] = "UNDEF"
+            var_0_abs = "UNDEF"
+
+        if self.inst.src1 in abs_env.keys():
+            var_1_abs = abs_env[self.inst.src1]  
+        else:
+            abs_env[self.inst.src1] = "UNDEF"
+            var_1_abs = "UNDEF"
+
+        # Computando o novo valor abstrato da variável destino
         new_abs_val = "UNDEF"
-        var_0_abs = abs_env[self.inst.src0] if self.inst.src0 in abs_env.keys() else "UNDEF"
-        var_1_abs = abs_env[self.inst.src1] if self.inst.src1 in abs_env.keys() else "UNDEF"
         if var_0_abs == "NAC" or var_1_abs == "NAC":
             new_abs_val = "NAC"
         elif var_0_abs == "UNDEF":
@@ -195,9 +231,11 @@ class MulEq(ConstantPropagationEq):
         elif var_1_abs == "UNDEF":
             new_abs_val = "UNDEF"
         else:
+            # Nesse caso, os dois valores são inicializados para constantes
             new_abs_val = var_0_abs * var_1_abs
-        
-        return new_abs_val
+
+        # TOmamos o meet dos valores para evitar loops        
+        return meet(old_abs_val, new_abs_val)
         # raise NotImplementedError
 
 
@@ -220,9 +258,23 @@ class LthEq(ConstantPropagationEq):
         #     new_abs_val = abs_env[self.inst.src0] < abs_env[self.inst.src1]
         
         # return new_abs_val
+        old_abs_val = abs_env[self.inst.dst]
+
+        # O valor abstrato dos operandos
+        if self.inst.src0 in abs_env.keys():
+            var_0_abs = abs_env[self.inst.src0]  
+        else:
+            abs_env[self.inst.src0] = "UNDEF"
+            var_0_abs = "UNDEF"
+
+        if self.inst.src1 in abs_env.keys():
+            var_1_abs = abs_env[self.inst.src1]  
+        else:
+            abs_env[self.inst.src1] = "UNDEF"
+            var_1_abs = "UNDEF"
+
+        # Computando o novo valor abstrato da variável destino
         new_abs_val = "UNDEF"
-        var_0_abs = abs_env[self.inst.src0] if self.inst.src0 in abs_env.keys() else "UNDEF"
-        var_1_abs = abs_env[self.inst.src1] if self.inst.src1 in abs_env.keys() else "UNDEF"
         if var_0_abs == "NAC" or var_1_abs == "NAC":
             new_abs_val = "NAC"
         elif var_0_abs == "UNDEF":
@@ -230,9 +282,11 @@ class LthEq(ConstantPropagationEq):
         elif var_1_abs == "UNDEF":
             new_abs_val = "UNDEF"
         else:
+            # Nesse caso, os dois valores são inicializados para constantes
             new_abs_val = var_0_abs < var_1_abs
-        
-        return new_abs_val
+
+        # TOmamos o meet dos valores para evitar loops        
+        return meet(old_abs_val, new_abs_val)
         # raise NotImplementedError
 
 
@@ -255,9 +309,23 @@ class GeqEq(ConstantPropagationEq):
         #     new_abs_val = abs_env[self.inst.src0] >= abs_env[self.inst.src1]
         
         # return new_abs_val
+        old_abs_val = abs_env[self.inst.dst]
+
+        # O valor abstrato dos operandos
+        if self.inst.src0 in abs_env.keys():
+            var_0_abs = abs_env[self.inst.src0]  
+        else:
+            abs_env[self.inst.src0] = "UNDEF"
+            var_0_abs = "UNDEF"
+
+        if self.inst.src1 in abs_env.keys():
+            var_1_abs = abs_env[self.inst.src1]  
+        else:
+            abs_env[self.inst.src1] = "UNDEF"
+            var_1_abs = "UNDEF"
+
+        # Computando o novo valor abstrato da variável destino
         new_abs_val = "UNDEF"
-        var_0_abs = abs_env[self.inst.src0] if self.inst.src0 in abs_env.keys() else "UNDEF"
-        var_1_abs = abs_env[self.inst.src1] if self.inst.src1 in abs_env.keys() else "UNDEF"
         if var_0_abs == "NAC" or var_1_abs == "NAC":
             new_abs_val = "NAC"
         elif var_0_abs == "UNDEF":
@@ -265,9 +333,11 @@ class GeqEq(ConstantPropagationEq):
         elif var_1_abs == "UNDEF":
             new_abs_val = "UNDEF"
         else:
+            # Nesse caso, os dois valores são inicializados para constantes
             new_abs_val = var_0_abs >= var_1_abs
-        
-        return new_abs_val
+
+        # TOmamos o meet dos valores para evitar loops        
+        return meet(old_abs_val, new_abs_val)
         # raise NotImplementedError
 
 
